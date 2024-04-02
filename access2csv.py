@@ -31,7 +31,9 @@ def parse_arguments() -> argparse.Namespace:
         help="path to output file",
         required=True,
     )
-    optional.add_argument("-h", "--help", action="help", help="show this help message and exit")
+    optional.add_argument(
+        "-h", "--help", action="help", help="show this help message and exit"
+    )
     return parser.parse_args()
 
 
@@ -39,7 +41,9 @@ def main() -> None:
     args = parse_arguments()
 
     try:
-        with open(args.input, "r") as input, open(args.output, "w", encoding="utf-8", newline="") as output:
+        with open(args.input, "r") as input, open(
+            args.output, "w", encoding="utf-8", newline=""
+        ) as output:
             # fmt: off
             pattern = re.compile(r"^(?P<Host>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s(?P<Clientid>[^\s]+)\s(?P<Userid>[^\s]+)\s\[(?P<Timestamp>[^\]]+)\]\s\"(?P<Method>[A-Z]+)\s(?P<Resource>[^\s]+)\s(?P<Protocol>[^\"]+)\"\s(?P<Status>\d{3})\s(?P<Size>[^\s]+)\s\"(?P<Referer>.*)\"\s\"(?P<Useragent>.*)\"$")
             # fmt: on
@@ -66,13 +70,18 @@ def main() -> None:
                 try:
                     match = pattern.match(line).groupdict()
                 except AttributeError:
-                    print(f"Error: malformed structure at line {lineno+1}", file=sys.stderr)
+                    print(
+                        f"Error: malformed structure at line {lineno+1}",
+                        file=sys.stderr,
+                    )
                     continue
 
                 if match["Size"] == "-":
                     match["Size"] = 0
 
-                match["Timestamp"] = datetime.strptime(match["Timestamp"], "%d/%b/%Y:%H:%M:%S %z").isoformat()
+                match["Timestamp"] = datetime.strptime(
+                    match["Timestamp"], "%d/%b/%Y:%H:%M:%S %z"
+                ).isoformat()
                 writer.writerow(match)
     except (FileNotFoundError, IOError):
         print(f"Error: failed to open {args.file}", file=sys.stderr)
