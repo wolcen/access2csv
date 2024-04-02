@@ -83,8 +83,8 @@ def main() -> None:
                     match["Timestamp"], "%d/%b/%Y:%H:%M:%S %z"
                 ).isoformat()
                 writer.writerow(match)
-    except (FileNotFoundError, IOError):
-        print(f"Error: failed to open {args.file}", file=sys.stderr)
+    except (FileNotFoundError, IOError) as err:
+        print(err, file=sys.stderr)
         sys.exit(1)
 
 
