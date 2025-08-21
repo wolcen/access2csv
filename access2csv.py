@@ -6,7 +6,6 @@ import re
 import sys
 from datetime import datetime
 
-
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Convert Apache's (Combined Log Format) access.log to csv",
@@ -31,6 +30,22 @@ def parse_arguments() -> argparse.Namespace:
         help="path to output file",
         required=True,
     )
+    required.add_argument(
+        "-e",
+        "--error",
+        type=str,
+        metavar="<PATH>",
+        help="path to errors file",
+        required=True,
+    )
+    optional.add_argument(
+        "-m",
+        "--errmax",
+        type=int,
+        help="maximum number of errors",
+        required=False,
+        default=10,
+    )
     optional.add_argument(
         "-h", "--help", action="help", help="show this help message and exit"
     )
@@ -39,11 +54,14 @@ def parse_arguments() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_arguments()
-
+    errors = 0
+    errmax = args.errmax
     try:
         with open(args.input, "r") as input, open(
             args.output, "w", encoding="utf-8", newline=""
-        ) as output:
+        ) as output, open(
+            args.error, "w", encoding="utf-8", newline=""
+        ) as err_file:
             # fmt: off
             pattern = re.compile(r"^(?P<Host>((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})|([0-9a-fA-F]{0,4}:?){2,8}))\s(?P<Clientid>[^\s]+)\s(?P<Userid>[^\s]+)\s\[(?P<Timestamp>[^\]]+)\]\s\"(?P<Method>[A-Z]+)\s(?P<Resource>[^\s]+)\s(?P<Protocol>[^\"]+)\"\s(?P<Status>\d{3})\s(?P<Size>[^\s]+)\s\"(?P<Referer>.*)\"\s\"(?P<Useragent>.*)\"$")
             # fmt: on
@@ -70,10 +88,11 @@ def main() -> None:
                 try:
                     match = pattern.match(line).groupdict()
                 except AttributeError:
-                    print(
-                        f"Error: malformed structure at line {lineno+1}",
-                        file=sys.stderr,
-                    )
+                    errors += 1
+                    err_file.write(f"{lineno+1}: {line}")
+                    if errmax > 0 and errors > errmax:
+                        print(f"Exceeded {errmax} errors, parsing stopped", file=sys.stderr)
+                        break
                     continue
 
                 if match["Size"] == "-":
@@ -87,6 +106,11 @@ def main() -> None:
         print(err, file=sys.stderr)
         sys.exit(1)
 
+    if errors:
+        if errmax > 0 and errors > errmax:
+            sys.exit(1)
+        else:
+            print(f"Completed processing successfully with {errors} errors detected.")
 
 if __name__ == "__main__":
     try:
