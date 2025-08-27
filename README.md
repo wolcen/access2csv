@@ -22,7 +22,9 @@ optional:
 ## Changes from sleepytariq/access2csv
 
 - Allow X errors processing input
-- Require error output file, capturing lineno/content for each parse error
+- ~~Require error output file, capturing lineno/content for each parse error~~
+
+sleepytariq subsequently added better optional logging arg - just as well not use this fork!
 
 ## Requirements
 
